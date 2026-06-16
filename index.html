@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asterisk Dual Nature Visualizer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 850px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        h3 {
+            margin-top: 0;
+            color: #1e293b;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        .scenarios {
+            display: flex;
+            gap: 20px;
+        }
+        .scenario-box {
+            flex: 1;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+        .scenario-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #334155;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            text-align: center;
+        }
+        .code-highlight { color: #fcd34d; font-weight: bold; font-size: 1.1rem; }
+        
+        .visual-area {
+            background: white;
+            border: 2px dashed #94a3b8;
+            border-radius: 6px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            position: relative;
+        }
+        
+        /* Left: Packing */
+        .loose-items {
+            display: flex;
+            gap: 15px;
+        }
+        .packet {
+            background: #3b82f6;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-weight: bold;
+            transition: all 0.8s ease-in-out;
+            z-index: 2;
+        }
+        .operator-icon {
+            background: #f59e0b;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            z-index: 1;
+        }
+        .packed-box {
+            border: 2px solid #3b82f6;
+            background: #eff6ff;
+            border-radius: 8px;
+            width: 150px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-weight: bold;
+            color: #1d4ed8;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        /* Right: Unpacking */
+        .packed-list {
+            border: 2px solid #10b981;
+            background: #ecfdf5;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #047857;
+            font-size: 0.85rem;
+            transition: all 0.5s;
+        }
+        .slots {
+            display: flex;
+            gap: 10px; /* Reduced gap to fit 4 items */
+        }
+        .slot {
+            border: 2px dashed #cbd5e1;
+            border-radius: 6px;
+            width: 45px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        .packet-upk {
+            background: #10b981;
+            color: white;
+            padding: 8px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 0.85rem;
+            position: absolute;
+            top: 15px;
+            opacity: 0;
+            transition: all 0.8s ease-out;
+            z-index: 2;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+        }
+        .btn-run { background-color: #8b5cf6; color: white; }
+        .btn-run:hover:not(:disabled) { background-color: #7c3aed; }
+        .btn-reset { background-color: #e2e8f0; color: #475569; }
+        .btn-reset:hover { background-color: #cbd5e1; }
+        
+        .explanation {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 4px;
+            color: #92400e;
+            font-size: 0.95rem;
+            text-align: center;
+            line-height: 1.5;
+            min-height: 45px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h3>The Dual Nature of the Asterisk (*)</h3>
+    
+    <div class="scenarios">
+        <div class="scenario-box">
+            <div class="scenario-title">Packing (Defining a function)</div>
+            <div class="code-block">
+                def calc_avg(<span class="code-highlight">*</span>args):
+            </div>
+            <div class="visual-area">
+                <div class="loose-items" id="loose-items">
+                    <div class="packet" id="p1">15</div>
+                    <div class="packet" id="p2">20</div>
+                    <div class="packet" id="p3">10</div>
+                </div>
+                <div class="operator-icon" title="The Vacuum">*</div>
+                <div class="packed-box" id="packed-box">args = (15, 20, 10)</div>
+            </div>
+        </div>
+
+        <div class="scenario-box">
+            <div class="scenario-title">Unpacking (Calling a function)</div>
+            <div class="code-block">
+                calc_area(<span class="code-highlight">*</span>bbox)
+            </div>
+            <div class="visual-area">
+                <div class="packed-list" id="packed-list">bbox = [10, 15, 20, 25]</div>
+                <div class="operator-icon" style="background:#10b981;" title="The Explosion">*</div>
+                
+                <div class="packet-upk" id="u1">10</div>
+                <div class="packet-upk" id="u2">15</div>
+                <div class="packet-upk" id="u3">20</div>
+                <div class="packet-upk" id="u4">25</div>
+
+                <div class="slots">
+                    <div class="slot">min_x</div>
+                    <div class="slot">min_y</div>
+                    <div class="slot">max_x</div>
+                    <div class="slot">max_y</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-run" id="btn-run" onclick="runSimulation()">Simulate Asterisk (*)</button>
+        <button class="btn-reset" onclick="resetState()">Reset</button>
+    </div>
+    
+    <div class="explanation" id="explanation">
+        Click <b>Simulate Asterisk (*)</b> to see the difference between using <code>*</code> in a <code>def</code> statement vs a function call.
+    </div>
+</div>
+
+<script>
+    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+    async function runSimulation() {
+        document.getElementById('btn-run').disabled = true;
+        const exp = document.getElementById('explanation');
+
+        exp.innerHTML = "<b>Executing...</b> Watch how the same symbol does two opposite things!";
+        
+        // --- Left Side: Packing ---
+        const p1 = document.getElementById('p1');
+        const p2 = document.getElementById('p2');
+        const p3 = document.getElementById('p3');
+        const packedBox = document.getElementById('packed-box');
+
+        // Move to center
+        p1.style.transform = "translate(50px, 80px) scale(0.5)";
+        p2.style.transform = "translate(0px, 80px) scale(0.5)";
+        p3.style.transform = "translate(-50px, 80px) scale(0.5)";
+        
+        // Fade out loose, fade in box
+        setTimeout(() => {
+            p1.style.opacity = "0";
+            p2.style.opacity = "0";
+            p3.style.opacity = "0";
+            packedBox.style.opacity = "1";
+        }, 600);
+
+        // --- Right Side: Unpacking ---
+        const packedList = document.getElementById('packed-list');
+        const u1 = document.getElementById('u1');
+        const u2 = document.getElementById('u2');
+        const u3 = document.getElementById('u3');
+        const u4 = document.getElementById('u4');
+
+        // Fade out original list
+        packedList.style.opacity = "0";
+        
+        // Prepare unpackets
+        u1.style.opacity = "1";
+        u2.style.opacity = "1";
+        u3.style.opacity = "1";
+        u4.style.opacity = "1";
+        
+        // Explode to slots (Adjusted translations for 4 items)
+        setTimeout(() => {
+            u1.style.transform = "translate(-85px, 150px)";
+            u2.style.transform = "translate(-30px, 150px)";
+            u3.style.transform = "translate(30px, 150px)";
+            u4.style.transform = "translate(85px, 150px)";
+        }, 100);
+
+        await sleep(1000);
+        exp.innerHTML = "<b>The Dual Nature:</b><br><code>*</code> in <code>def</code> acts like a <b>Vacuum</b>, packing loose items into a single tuple.<br><code>*</code> in a function call acts like an <b>Explosion</b>, blowing a list apart into separate arguments.";
+    }
+
+    function resetState() {
+        document.getElementById('btn-run').disabled = false;
+        
+        // Reset Left
+        const p1 = document.getElementById('p1');
+        const p2 = document.getElementById('p2');
+        const p3 = document.getElementById('p3');
+        p1.style.transform = "none"; p1.style.opacity = "1";
+        p2.style.transform = "none"; p2.style.opacity = "1";
+        p3.style.transform = "none"; p3.style.opacity = "1";
+        document.getElementById('packed-box').style.opacity = "0";
+
+        // Reset Right
+        document.getElementById('packed-list').style.opacity = "1";
+        const u1 = document.getElementById('u1');
+        const u2 = document.getElementById('u2');
+        const u3 = document.getElementById('u3');
+        const u4 = document.getElementById('u4');
+        u1.style.transform = "none"; u1.style.opacity = "0";
+        u2.style.transform = "none"; u2.style.opacity = "0";
+        u3.style.transform = "none"; u3.style.opacity = "0";
+        u4.style.transform = "none"; u4.style.opacity = "0";
+
+        document.getElementById('explanation').innerHTML = "Click <b>Simulate Asterisk (*)</b> to see the difference between using <code>*</code> in a <code>def</code> statement vs a function call.";
+    }
+</script>
+
+</body>
+</html>
